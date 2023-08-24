@@ -91,6 +91,7 @@ class PGVector(VectorStore):
         self,
         connection_string: str,
         embedding_function: Embeddings,
+        pool: Optional[Any] = None,        
         collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
         collection_metadata: Optional[dict] = None,
         distance_strategy: DistanceStrategy = DEFAULT_DISTANCE_STRATEGY,
@@ -99,6 +100,7 @@ class PGVector(VectorStore):
         relevance_score_fn: Optional[Callable[[float], float]] = None,
     ) -> None:
         self.connection_string = connection_string
+        self.pool = pool
         self.embedding_function = embedding_function
         self.collection_name = collection_name
         self.collection_metadata = collection_metadata
@@ -131,7 +133,10 @@ class PGVector(VectorStore):
         return self.embedding_function
 
     def connect(self) -> sqlalchemy.engine.Connection:
-        engine = sqlalchemy.create_engine(self.connection_string)
+        if self.pool:
+            engine = sqlalchemy.create_engine(self.connection_string, pool=self.pool)
+        else:
+            engine = sqlalchemy.create_engine(self.connection_string)
         conn = engine.connect()
         return conn
 
